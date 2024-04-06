@@ -1,0 +1,20 @@
+{
+  "name": "driver-and-constructor-image-csv-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "kirill",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.42.0",
+    "axios": "^1.6.8",
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "json2csv": "^6.0.0-alpha.2",
+    "sqlite3": "^5.1.7"
+  }
+}
