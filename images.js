@@ -17,9 +17,6 @@ app.listen(5050, () => {
   console.log("listening on port 5050");
 });
 
-const driverData = [];
-const constData = [];
-
 app.get("/api/drivers", async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -31,9 +28,6 @@ app.get("/api/drivers", async (req, res) => {
       const driverName = [];
       data.forEach((driver) => {
         driverName.push(
-          `${driver.forename} ${driver.surname} ${driver.driverId}`
-        );
-        driverData.push(
           `${driver.forename} ${driver.surname} ${driver.driverId}`
         );
       });
@@ -76,9 +70,6 @@ app.get("/api/constructors", async (req, res) => {
     if (error) {
       res.status(500).send({ error: "Internal Server Error" });
     } else if (data && data.length > 0) {
-      data.forEach((constructor) => {
-        constData.push(`${constructor.name} ${constructor.constructorId}`);
-      });
 
       const constructorName = data.map((constructor) => constructor.name);
 
@@ -117,6 +108,7 @@ app.get("/api/get-images", async (req, res) => {
     const allImageUrls = [];
 
     const driverNames = await axios.get("http://localhost:5050/api/drivers");
+    
     const constructorNames = await axios.get(
       "http://localhost:5050/api/constructors"
     );
@@ -125,7 +117,7 @@ app.get("/api/get-images", async (req, res) => {
     const constructorUrls = constructorNames.data;
 
     for (const driverUrl of driverUrls) {
-      const imageUrls = await getImageUrls(driverUrl, driverData.driverId);
+      const imageUrls = await getImageUrls(driverUrl, driverUrl.driverId);
       allImageUrls.push(...imageUrls);
       console.log("processing driver url");
     }
@@ -133,7 +125,7 @@ app.get("/api/get-images", async (req, res) => {
     for (const constructorUrl of constructorUrls) {
       const imageUrls = await getImageUrls(
         constructorUrl,
-        constData.constructorId
+        constructorUrl.constructorId
       );
       allImageUrls.push(...imageUrls);
       console.log("processing constructor url");
