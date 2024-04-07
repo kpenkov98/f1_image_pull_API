@@ -154,7 +154,7 @@ async function getImageUrls(url, id) {
     const $ = cheerio.load(html);
 
     const imageUrls = [];
-    $("body img").each((index, element) => {
+    $("body main img").each((index, element) => {
       const imageUrl = $(element).attr("src");
       if (imageUrl) {
         imageUrls.push({ imageUrl: imageUrl, id: id });
