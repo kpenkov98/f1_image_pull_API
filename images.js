@@ -1,4 +1,4 @@
-require('dotenv').config();
+require("dotenv").config();
 
 const fs = require("fs");
 const { parse } = require("json2csv");
@@ -9,8 +9,9 @@ const cheerio = require("cheerio");
 
 const supa = require("@supabase/supabase-js");
 const app = express();
-const supaUrl = process.env.SUPABASE_KEY;
-const supaAnonKey =process.env.SUPABASE_URL;
+const supaUrl = "https://wejrcsaojijlxfrtoija.supabase.co";
+const supaAnonKey =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndlanJjc2FvamlqbHhmcnRvaWphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDg3OTYzNzksImV4cCI6MjAyNDM3MjM3OX0.CRlRnblyCpynZQ4pZJ2kp8TFlxhgJU35LFW5HtsEZmM";
 const supabase = supa.createClient(supaUrl, supaAnonKey);
 
 app.listen(5050, () => {
@@ -25,15 +26,9 @@ app.get("/api/drivers", async (req, res) => {
     if (error) {
       res.status(500).send({ error: "Internal Server Error" });
     } else if (data && data.length > 0) {
-      const driverName = [];
-      data.forEach((driver) => {
-        driverName.push(
-          `${driver.forename} ${driver.surname} ${driver.driverId}`
-        );
-      });
-      const driverUrlFormatted = driverName.map((item) => {
-        const parts = item.split(" ");
-        console.log("Parts:", parts);
+      const driverUrlFormatted = data.map((driver) => {
+        const { forename, surname, driverId } = driver;
+        const parts = `${forename} ${surname} ${driverId}`.split(" ");
 
         const formattedParts = parts.map((part) =>
           part
@@ -44,12 +39,10 @@ app.get("/api/drivers", async (req, res) => {
             .replace(/'/g, "-")
             .toLowerCase()
         );
-        console.log("Formatted Parts:", formattedParts);
 
         const formattedName = formattedParts.slice(0, -1).join("-");
-        console.log("Formatted Name:", formattedName);
-
-        return `https://pitwall.app/drivers/${formattedName}`;
+        const formattedUrl = `https://pitwall.app/drivers/${formattedName}`;
+        return { url: formattedUrl, id: driver.driverId };
       });
 
       res.json(driverUrlFormatted);
@@ -70,13 +63,8 @@ app.get("/api/constructors", async (req, res) => {
     if (error) {
       res.status(500).send({ error: "Internal Server Error" });
     } else if (data && data.length > 0) {
-
-      const constructorName = data.map((constructor) => constructor.name);
-
-      const constructorUrlFormatted = constructorName.map((item) => {
-        const parts = item.split(" ");
-        console.log("Parts:", parts);
-
+      const constructorUrls = data.map((constructor) => {
+        const parts = constructor.name.split(" ");
         const formattedParts = parts.map((part) =>
           part
             .normalize("NFD")
@@ -84,15 +72,12 @@ app.get("/api/constructors", async (req, res) => {
             .replace(/\s+/g, "-")
             .toLowerCase()
         );
-        console.log("Formatted Parts:", formattedParts);
-
         const formattedName = formattedParts.join("-");
-        console.log("Formatted Name:", formattedName);
-
-        return `https://pitwall.app/teams/${formattedName}`;
+        const formattedUrl = `https://pitwall.app/teams/${formattedName}`;
+        return { url: formattedUrl, id: constructor.constructorId };
       });
 
-      res.json(constructorUrlFormatted);
+      res.json(constructorUrls);
     } else {
       res.status(404).send({ error: "Not found" });
     }
@@ -107,27 +92,41 @@ app.get("/api/get-images", async (req, res) => {
   try {
     const allImageUrls = [];
 
-    const driverNames = await axios.get("http://localhost:5050/api/drivers");
-    
-    const constructorNames = await axios.get(
+    const driverNamesResponse = await axios.get(
+      "http://localhost:5050/api/drivers"
+    );
+    const constructorNamesResponse = await axios.get(
       "http://localhost:5050/api/constructors"
     );
 
-    const driverUrls = driverNames.data;
-    const constructorUrls = constructorNames.data;
+    const driverUrls = driverNamesResponse.data.map((driver) => ({
+      url: driver.url,
+      id: driver.id,
+    }));
+
+    const constructorUrls = constructorNamesResponse.data.map(
+      (constructor) => ({
+        url: constructor.url,
+        id: constructor.id,
+      })
+    );
+    console.log(driverUrls);
+    console.log(constructorUrls);
 
     for (const driverUrl of driverUrls) {
-      const imageUrls = await getImageUrls(driverUrl, driverUrl.driverId);
+      const imageUrls = await getImageUrls(driverUrl.url, driverUrl.id);
       allImageUrls.push(...imageUrls);
+      console.log(driverUrl.id);
       console.log("processing driver url");
     }
 
     for (const constructorUrl of constructorUrls) {
       const imageUrls = await getImageUrls(
-        constructorUrl,
-        constructorUrl.constructorId
+        constructorUrl.url,
+        constructorUrl.id
       );
       allImageUrls.push(...imageUrls);
+      console.log(constructorUrl.id);
       console.log("processing constructor url");
     }
 
@@ -155,7 +154,7 @@ async function getImageUrls(url, id) {
     const $ = cheerio.load(html);
 
     const imageUrls = [];
-    $("img").each((index, element) => {
+    $("body img").each((index, element) => {
       const imageUrl = $(element).attr("src");
       if (imageUrl) {
         imageUrls.push({ imageUrl: imageUrl, id: id });
