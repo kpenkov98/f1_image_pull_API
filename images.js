@@ -154,15 +154,21 @@ async function getImageUrls(url, id) {
     const $ = cheerio.load(html);
 
     const imageUrls = [];
-    $("body main img").each((index, element) => {
-      const imageUrl = $(element).attr("src");
-      if (imageUrl) {
+    const images = $("body main img");
+    if (images.length === 0) {
+
+      imageUrls.push({
+        imageUrl:
+          "https://www.svgrepo.com/show/508699/landscape-placeholder.svg",
+        id: id,
+      });
+    } else {
+
+      images.each((index, element) => {
+        const imageUrl = $(element).attr("src");
         imageUrls.push({ imageUrl: imageUrl, id: id });
-      }
-        else {
-          imageUrls.push({ imageUrl: "https://www.svgrepo.com/show/508699/landscape-placeholder.svg", id: id });
-        }
-    });
+      });
+    }
 
     return imageUrls;
   } catch (error) {
