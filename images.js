@@ -159,6 +159,9 @@ async function getImageUrls(url, id) {
       if (imageUrl) {
         imageUrls.push({ imageUrl: imageUrl, id: id });
       }
+        else {
+          imageUrls.push({ imageUrl: "https://www.svgrepo.com/show/508699/landscape-placeholder.svg", id: id });
+        }
     });
 
     return imageUrls;
